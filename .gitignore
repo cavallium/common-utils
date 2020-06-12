@@ -1,6 +1,6 @@
 
-# Created by https://www.toptal.com/developers/gitignore/api/linux,intellij+all,windows,git
-# Edit at https://www.toptal.com/developers/gitignore?templates=linux,intellij+all,windows,git
+# Created by https://www.toptal.com/developers/gitignore/api/linux,intellij+all,windows,git,maven
+# Edit at https://www.toptal.com/developers/gitignore?templates=linux,intellij+all,windows,git,maven
 
 ### Git ###
 # Created by git for backups. To disable backups in Git:
@@ -121,6 +121,19 @@ modules.xml
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
 
+### Maven ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+# https://github.com/takari/maven-wrapper#usage-without-binary-jar
+.mvn/wrapper/maven-wrapper.jar
+
 ### Windows ###
 # Windows thumbnail cache files
 Thumbs.db
@@ -147,4 +160,4 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/linux,intellij+all,windows,git
+# End of https://www.toptal.com/developers/gitignore/api/linux,intellij+all,windows,git,maven
