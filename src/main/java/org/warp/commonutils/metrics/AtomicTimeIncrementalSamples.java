@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 public class AtomicTimeIncrementalSamples implements AtomicTimeIncrementalSamplesSnapshot {
 
+	protected final boolean isSnapshot;
 	protected long startTime;
 	protected final long[] samples;
 	protected final int sampleTime;
@@ -21,18 +22,25 @@ public class AtomicTimeIncrementalSamples implements AtomicTimeIncrementalSample
 		startTime = -1;
 		if (samplesCount < 1) throw new IndexOutOfBoundsException();
 		if (sampleTime < 1) throw new IndexOutOfBoundsException();
+		this.isSnapshot = false;
 	}
 
-	public AtomicTimeIncrementalSamples(long startTime, long[] samples, int sampleTime, long currentSampleStartTime, long totalEvents) {
+	public AtomicTimeIncrementalSamples(long startTime, long[] samples, int sampleTime, long currentSampleStartTime, long totalEvents, boolean isSnapshot) {
 		this.startTime = startTime;
 		this.samples = samples;
 		this.sampleTime = sampleTime;
 		this.currentSampleStartTime = currentSampleStartTime;
 		this.totalEvents = totalEvents;
+		this.isSnapshot = isSnapshot;
 	}
 
 	protected synchronized void updateSamples() {
 		checkStarted();
+
+		if (isSnapshot) {
+			return;
+		}
+
 		long currentTime = System.nanoTime() / 1000000L;
 		long timeDiff = currentTime - currentSampleStartTime;
 		long timeToShift = timeDiff - (timeDiff % sampleTime);
@@ -116,6 +124,6 @@ public class AtomicTimeIncrementalSamples implements AtomicTimeIncrementalSample
 	}
 
 	public synchronized AtomicTimeIncrementalSamplesSnapshot snapshot() {
-		return new AtomicTimeIncrementalSamples(startTime, Arrays.copyOf(this.samples, this.samples.length), sampleTime, currentSampleStartTime, totalEvents);
+		return new AtomicTimeIncrementalSamples(startTime, Arrays.copyOf(this.samples, this.samples.length), sampleTime, currentSampleStartTime, totalEvents, true);
 	}
 }

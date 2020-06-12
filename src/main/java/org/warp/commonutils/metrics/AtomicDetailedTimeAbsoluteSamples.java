@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 public class AtomicDetailedTimeAbsoluteSamples<T> implements AtomicDetailedTimeAbsoluteSamplesSnapshot<T> {
 
+	private final boolean isSnapshot;
 	private final int sampleTime;
 	private final int samplesCount;
 	private HashMap<T, AtomicTimeAbsoluteSamples> detailedAtomicTimeSamples = new HashMap<>();
@@ -15,13 +16,15 @@ public class AtomicDetailedTimeAbsoluteSamples<T> implements AtomicDetailedTimeA
 	public AtomicDetailedTimeAbsoluteSamples(int sampleTime, int samplesCount) {
 		this.sampleTime = sampleTime;
 		this.samplesCount = samplesCount;
+		this.isSnapshot = false;
 	}
 
-	public AtomicDetailedTimeAbsoluteSamples(int sampleTime, int samplesCount, HashMap<T, AtomicTimeAbsoluteSamplesSnapshot> detailedAtomicTimeSamples) {
+	public AtomicDetailedTimeAbsoluteSamples(int sampleTime, int samplesCount, HashMap<T, AtomicTimeAbsoluteSamplesSnapshot> detailedAtomicTimeSamples, boolean isSnapshot) {
 		this.sampleTime = sampleTime;
 		this.samplesCount = samplesCount;
 		this.detailedAtomicTimeSamples = new HashMap<>();
 		detailedAtomicTimeSamples.forEach((detail, sample) -> this.detailedAtomicTimeSamples.put(detail, (AtomicTimeAbsoluteSamples) sample));
+		this.isSnapshot = isSnapshot;
 	}
 
 	private synchronized void updateSamples() {
@@ -86,6 +89,6 @@ public class AtomicDetailedTimeAbsoluteSamples<T> implements AtomicDetailedTimeA
 		var clonedDetailedAtomicTimeSamples = new HashMap<T, AtomicTimeAbsoluteSamplesSnapshot>(detailedAtomicTimeSamples);
 		clonedDetailedAtomicTimeSamples.replaceAll((key, value) -> ((AtomicTimeAbsoluteSamples) value).snapshot());
 		return new AtomicDetailedTimeAbsoluteSamples<>(sampleTime,
-				samplesCount, clonedDetailedAtomicTimeSamples);
+				samplesCount, clonedDetailedAtomicTimeSamples, true);
 	}
 }

@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 public class AtomicTimeAbsoluteSamples implements AtomicTimeAbsoluteSamplesSnapshot {
 
+	protected final boolean isSnapshot;
 	protected long startTime;
 	protected final long[] samples;
 	protected final int sampleTime;
@@ -22,19 +23,26 @@ public class AtomicTimeAbsoluteSamples implements AtomicTimeAbsoluteSamplesSnaps
 		startTime = -1;
 		if (samplesCount < 1) throw new IndexOutOfBoundsException();
 		if (sampleTime < 1) throw new IndexOutOfBoundsException();
+		this.isSnapshot = false;
 	}
 
-	public AtomicTimeAbsoluteSamples(long startTime, long[] samples, int sampleTime, long currentSampleStartTime, long totalSamplesSum, long totalSamplesCount) {
+	public AtomicTimeAbsoluteSamples(long startTime, long[] samples, int sampleTime, long currentSampleStartTime, long totalSamplesSum, long totalSamplesCount, boolean isSnapshot) {
 		this.startTime = startTime;
 		this.samples = samples;
 		this.sampleTime = sampleTime;
 		this.currentSampleStartTime = currentSampleStartTime;
 		this.totalSamplesSum = totalSamplesSum;
 		this.totalSamplesCount = totalSamplesCount;
+		this.isSnapshot = isSnapshot;
 	}
 
 	protected synchronized void updateSamples() {
 		checkStarted();
+
+		if (isSnapshot) {
+			return;
+		}
+
 		long currentTime = System.nanoTime() / 1000000L;
 		long timeDiff = currentTime - currentSampleStartTime;
 		long timeToShift = timeDiff - (timeDiff % sampleTime);
@@ -107,6 +115,6 @@ public class AtomicTimeAbsoluteSamples implements AtomicTimeAbsoluteSamplesSnaps
 	}
 
 	public synchronized AtomicTimeAbsoluteSamplesSnapshot snapshot() {
-		return new AtomicTimeAbsoluteSamples(startTime, Arrays.copyOf(this.samples, this.samples.length), sampleTime, currentSampleStartTime, totalSamplesSum, totalSamplesCount);
+		return new AtomicTimeAbsoluteSamples(startTime, Arrays.copyOf(this.samples, this.samples.length), sampleTime, currentSampleStartTime, totalSamplesSum, totalSamplesCount, true);
 	}
 }

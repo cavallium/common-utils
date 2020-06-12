@@ -17,8 +17,8 @@ public class AtomicDetailedTimeIncrementalSamples<T> extends AtomicTimeIncrement
 	}
 
 	public AtomicDetailedTimeIncrementalSamples(long startTime, long[] samples, int sampleTime, long currentSampleStartTime, long totalEvents,
-			HashMap<T, AtomicTimeIncrementalSamplesSnapshot> detailedAtomicTimeSamples) {
-		super(startTime, samples, sampleTime, currentSampleStartTime, totalEvents);
+			HashMap<T, AtomicTimeIncrementalSamplesSnapshot> detailedAtomicTimeSamples, boolean isSnapshot) {
+		super(startTime, samples, sampleTime, currentSampleStartTime, totalEvents, isSnapshot);
 		this.detailedAtomicTimeSamples = new HashMap<>();
 		detailedAtomicTimeSamples.forEach((detail, sample) -> detailedAtomicTimeSamples.put(detail, (AtomicTimeIncrementalSamples) sample));
 	}
@@ -76,6 +76,6 @@ public class AtomicDetailedTimeIncrementalSamples<T> extends AtomicTimeIncrement
 		var clonedDetailedAtomicTimeSamples = new HashMap<T, AtomicTimeIncrementalSamplesSnapshot>(detailedAtomicTimeSamples);
 		clonedDetailedAtomicTimeSamples.replaceAll((key, value) -> ((AtomicTimeIncrementalSamples) value).snapshot());
 		return new AtomicDetailedTimeIncrementalSamples<>(startTime, Arrays.copyOf(this.samples, this.samples.length), sampleTime,
-				currentSampleStartTime, totalEvents, clonedDetailedAtomicTimeSamples);
+				currentSampleStartTime, totalEvents, clonedDetailedAtomicTimeSamples, isSnapshot);
 	}
 }
