@@ -20,7 +20,7 @@ public class AtomicDetailedTimeIncrementalSamples<T> extends AtomicTimeIncrement
 			HashMap<T, AtomicTimeIncrementalSamplesSnapshot> detailedAtomicTimeSamples, boolean isSnapshot) {
 		super(startTime, samples, sampleTime, currentSampleStartTime, totalEvents, isSnapshot);
 		this.detailedAtomicTimeSamples = new HashMap<>();
-		detailedAtomicTimeSamples.forEach((detail, sample) -> detailedAtomicTimeSamples.put(detail, (AtomicTimeIncrementalSamples) sample));
+		detailedAtomicTimeSamples.forEach((detail, sample) -> this.detailedAtomicTimeSamples.put(detail, (AtomicTimeIncrementalSamples) sample));
 	}
 
 	private synchronized AtomicTimeIncrementalSamples getDetailed(T detail) {
