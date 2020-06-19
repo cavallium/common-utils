@@ -1,13 +1,18 @@
 package org.warp.commonutils.metrics;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Set;
 
 public class AtomicDetailedTimeAbsoluteSamples<T> implements AtomicDetailedTimeAbsoluteSamplesSnapshot<T> {
 
 	private final boolean isSnapshot;
 	private final int sampleTime;
 	private final int samplesCount;
-	private HashMap<T, AtomicTimeAbsoluteSamples> detailedAtomicTimeSamples = new HashMap<>();
+	private Object2ObjectMap<T, AtomicTimeAbsoluteSamples> detailedAtomicTimeSamples = new Object2ObjectOpenHashMap<>();
 
 	/**
 	 * @param sampleTime   in milliseconds
@@ -22,7 +27,7 @@ public class AtomicDetailedTimeAbsoluteSamples<T> implements AtomicDetailedTimeA
 	public AtomicDetailedTimeAbsoluteSamples(int sampleTime, int samplesCount, HashMap<T, AtomicTimeAbsoluteSamplesSnapshot> detailedAtomicTimeSamples, boolean isSnapshot) {
 		this.sampleTime = sampleTime;
 		this.samplesCount = samplesCount;
-		this.detailedAtomicTimeSamples = new HashMap<>();
+		this.detailedAtomicTimeSamples = new Object2ObjectOpenHashMap<>();
 		detailedAtomicTimeSamples.forEach((detail, sample) -> this.detailedAtomicTimeSamples.put(detail, (AtomicTimeAbsoluteSamples) sample));
 		this.isSnapshot = isSnapshot;
 	}
@@ -43,6 +48,11 @@ public class AtomicDetailedTimeAbsoluteSamples<T> implements AtomicDetailedTimeA
 	public synchronized void set(T detail, long count) {
 		updateSamples();
 		getDetailed(detail).set(count);
+	}
+
+	@Override
+	public synchronized Set<T> getDetails() {
+		return Collections.unmodifiableSet(new ObjectOpenHashSet<>(detailedAtomicTimeSamples.keySet()));
 	}
 
 	@Override
@@ -86,6 +96,9 @@ public class AtomicDetailedTimeAbsoluteSamples<T> implements AtomicDetailedTimeA
 	}
 
 	public synchronized AtomicDetailedTimeAbsoluteSamples<T> snapshot() {
+		if (isSnapshot) {
+			return this;
+		}
 		var clonedDetailedAtomicTimeSamples = new HashMap<T, AtomicTimeAbsoluteSamplesSnapshot>(detailedAtomicTimeSamples);
 		clonedDetailedAtomicTimeSamples.replaceAll((key, value) -> ((AtomicTimeAbsoluteSamples) value).snapshot());
 		return new AtomicDetailedTimeAbsoluteSamples<>(sampleTime,

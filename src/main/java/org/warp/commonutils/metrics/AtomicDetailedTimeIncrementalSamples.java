@@ -1,12 +1,17 @@
 package org.warp.commonutils.metrics;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Set;
 
 public class AtomicDetailedTimeIncrementalSamples<T> extends AtomicTimeIncrementalSamples implements
 		AtomicDetailedTimeIncrementalSamplesSnapshot<T> {
 
-	private HashMap<T, AtomicTimeIncrementalSamples> detailedAtomicTimeSamples = new HashMap<>();
+	private Object2ObjectMap<T, AtomicTimeIncrementalSamples> detailedAtomicTimeSamples = new Object2ObjectOpenHashMap<>();
 
 	/**
 	 * @param sampleTime   in milliseconds
@@ -19,7 +24,7 @@ public class AtomicDetailedTimeIncrementalSamples<T> extends AtomicTimeIncrement
 	public AtomicDetailedTimeIncrementalSamples(long startTime, long[] samples, int sampleTime, long currentSampleStartTime, long totalEvents,
 			HashMap<T, AtomicTimeIncrementalSamplesSnapshot> detailedAtomicTimeSamples, boolean isSnapshot) {
 		super(startTime, samples, sampleTime, currentSampleStartTime, totalEvents, isSnapshot);
-		this.detailedAtomicTimeSamples = new HashMap<>();
+		this.detailedAtomicTimeSamples = new Object2ObjectOpenHashMap<>();
 		detailedAtomicTimeSamples.forEach((detail, sample) -> this.detailedAtomicTimeSamples.put(detail, (AtomicTimeIncrementalSamples) sample));
 	}
 
@@ -36,6 +41,11 @@ public class AtomicDetailedTimeIncrementalSamples<T> extends AtomicTimeIncrement
 		updateSamples();
 		getDetailed(detail).increment(count);
 		increment(count);
+	}
+
+	@Override
+	public synchronized Set<T> getDetails() {
+		return Collections.unmodifiableSet(new ObjectOpenHashSet<>(detailedAtomicTimeSamples.keySet()));
 	}
 
 	@Override
@@ -73,6 +83,9 @@ public class AtomicDetailedTimeIncrementalSamples<T> extends AtomicTimeIncrement
 	}
 
 	public synchronized AtomicDetailedTimeIncrementalSamples<T> snapshot() {
+		if (isSnapshot) {
+			return this;
+		}
 		var clonedDetailedAtomicTimeSamples = new HashMap<T, AtomicTimeIncrementalSamplesSnapshot>(detailedAtomicTimeSamples);
 		clonedDetailedAtomicTimeSamples.replaceAll((key, value) -> ((AtomicTimeIncrementalSamples) value).snapshot());
 		return new AtomicDetailedTimeIncrementalSamples<>(startTime, Arrays.copyOf(this.samples, this.samples.length), sampleTime,

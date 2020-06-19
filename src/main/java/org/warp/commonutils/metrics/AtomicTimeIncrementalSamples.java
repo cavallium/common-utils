@@ -124,6 +124,9 @@ public class AtomicTimeIncrementalSamples implements AtomicTimeIncrementalSample
 	}
 
 	public synchronized AtomicTimeIncrementalSamplesSnapshot snapshot() {
+		if (isSnapshot) {
+			return this;
+		}
 		return new AtomicTimeIncrementalSamples(startTime, Arrays.copyOf(this.samples, this.samples.length), sampleTime, currentSampleStartTime, totalEvents, true);
 	}
 }
