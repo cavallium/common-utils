@@ -10,7 +10,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class CompletableFutureUtils {
@@ -144,5 +146,33 @@ public class CompletableFutureUtils {
 
 	public static <T> void forEach(CompletableFuture<List<CompletableFuture<T>>> futureList, Consumer<T> consumer) {
 		futureList.join().parallelStream().map(CompletableFuture::join).forEach(consumer);
+	}
+
+	public static <T> CompletableFuture<T> catchUncheckedExceptions(Supplier<CompletableFuture<T>> supplier) {
+		try {
+			return supplier.get();
+		} catch (Exception exception) {
+			return CompletableFuture.failedFuture(exception);
+		}
+	}
+
+	public static CompletableFuture<Void> runSequence(Collection<CompletableFuture<?>> collection) {
+		if (collection.isEmpty()) {
+			return CompletableFuture.completedFuture(null);
+		} else {
+			var result = new CompletableFuture<Void>();
+			for (CompletableFuture<?> completableFuture : collection) {
+				result = result.thenCompose(x -> completableFuture.thenRun(() -> {}));
+			}
+			return result;
+		}
+	}
+
+	public static CompletableFuture<Void> runSequenceAsync(Collection<CompletableFuture<?>> collection, ExecutorService executorService) {
+		var result = CompletableFuture.<Void>completedFuture(null);
+		for (CompletableFuture<?> completableFuture : collection) {
+			result = result.thenComposeAsync(x -> completableFuture.thenRun(() -> {}), executorService);
+		}
+		return result;
 	}
 }
