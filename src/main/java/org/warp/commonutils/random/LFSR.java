@@ -35,7 +35,7 @@ public class LFSR implements Iterable<BigInteger> {
 		return random(50, Math.abs(random.nextInt()));
 	}
 
-	public static LFSR random(int bitsSize, long startNumber) {
+	public static BigInteger randomPrimitive(int bitsSize) {
 		// Build the BigInteger.
 		BigInteger primitive = BigInteger.ZERO;
 		for (int bitNumber = 0; bitNumber <= bitsSize; bitNumber++) {
@@ -43,7 +43,11 @@ public class LFSR implements Iterable<BigInteger> {
 				primitive = primitive.or(BigInteger.ONE.shiftLeft(bitNumber));
 			}
 		}
-		return new LFSR(primitive, BigInteger.valueOf(startNumber));
+		return primitive;
+	}
+
+	public static LFSR random(int bitsSize, long startNumber) {
+		return new LFSR(randomPrimitive(bitsSize), BigInteger.valueOf(startNumber));
 	}
 
 	// The poly must be primitive to span the full sequence.
