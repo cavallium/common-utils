@@ -3,6 +3,7 @@ package org.warp.commonutils.random;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.Random;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Linear feedback shift register
@@ -58,12 +59,13 @@ public class LFSR implements Iterable<BigInteger> {
 		this.taps = primitivePoly.shiftRight(1);
 	}
 
+	@NotNull
 	@Override
-	public Iterator<BigInteger> iterator() {
+	public LFSRIterator iterator() {
 		return new LFSRIterator(start);
 	}
 
-	private class LFSRIterator implements Iterator<BigInteger> {
+	public class LFSRIterator implements Iterator<BigInteger> {
 		// The last one we returned.
 
 		private BigInteger last = null;
@@ -108,6 +110,12 @@ public class LFSR implements Iterable<BigInteger> {
 			// Don't deliver it again.
 			next = null;
 			return last;
+		}
+
+		public BigInteger next(BigInteger last) {
+			this.last = last;
+			next = null;
+			return next();
 		}
 
 		@Override
