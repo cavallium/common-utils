@@ -17,11 +17,18 @@ public class FutureLockUtils {
 		} else {
 			lockValue = 0;
 		}
-		return r.get().whenComplete((x, y) -> {
+		try {
+			return r.get().whenComplete((x, y) -> {
+				if (lock != null) {
+					lock.unlockRead(lockValue);
+				}
+			});
+		} catch (Throwable ex) {
 			if (lock != null) {
 				lock.unlockRead(lockValue);
 			}
-		});
+			throw ex;
+		}
 	}
 
 	public static <T> CompletableFuture<T> writeLock(@Nullable StampedLock lock, @NotNull Supplier<CompletableFuture<T>> r) {
@@ -31,11 +38,18 @@ public class FutureLockUtils {
 		} else {
 			lockValue = 0;
 		}
-		return r.get().whenComplete((x, y) -> {
+		try {
+			return r.get().whenComplete((x, y) -> {
+				if (lock != null) {
+					lock.unlockWrite(lockValue);
+				}
+			});
+		} catch (Throwable ex) {
 			if (lock != null) {
 				lock.unlockWrite(lockValue);
 			}
-		});
+			throw ex;
+		}
 	}
 
 	public static <T> CompletableFuture<T> readLockIO(@Nullable StampedLock lock, @NotNull IOSupplier<CompletableFuture<T>> r) throws IOException {
@@ -45,11 +59,18 @@ public class FutureLockUtils {
 		} else {
 			lockValue = 0;
 		}
-		return r.get().whenComplete((x, y) -> {
+		try {
+			return r.get().whenComplete((x, y) -> {
+				if (lock != null) {
+					lock.unlockRead(lockValue);
+				}
+			});
+		} catch (Throwable ex) {
 			if (lock != null) {
 				lock.unlockRead(lockValue);
 			}
-		});
+			throw ex;
+		}
 	}
 
 	public static <T> CompletableFuture<T> writeLockIO(@Nullable StampedLock lock, @NotNull IOSupplier<CompletableFuture<T>> r) throws IOException {
@@ -59,10 +80,17 @@ public class FutureLockUtils {
 		} else {
 			lockValue = 0;
 		}
-		return r.get().whenComplete((x, y) -> {
+		try {
+			return r.get().whenComplete((x, y) -> {
+				if (lock != null) {
+					lock.unlockWrite(lockValue);
+				}
+			});
+		} catch (Throwable ex) {
 			if (lock != null) {
 				lock.unlockWrite(lockValue);
 			}
-		});
+			throw ex;
+		}
 	}
 }
