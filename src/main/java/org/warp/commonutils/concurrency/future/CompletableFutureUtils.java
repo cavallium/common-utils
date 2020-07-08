@@ -12,6 +12,7 @@ import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -172,6 +173,14 @@ public class CompletableFutureUtils {
 		var result = CompletableFuture.<Void>completedFuture(null);
 		for (CompletableFuture<?> completableFuture : collection) {
 			result = result.thenComposeAsync(x -> completableFuture.thenRun(() -> {}), executorService);
+		}
+		return result;
+	}
+
+	public static <T> CompletableFuture<T> applySequenceAsync(T initialValue, Collection<Function<T, CompletableFuture<T>>> collection, ExecutorService executorService) {
+		var result = CompletableFuture.completedFuture(initialValue);
+		for (Function<T, CompletableFuture<T>> item : collection) {
+			result = result.thenComposeAsync(item, executorService);
 		}
 		return result;
 	}
