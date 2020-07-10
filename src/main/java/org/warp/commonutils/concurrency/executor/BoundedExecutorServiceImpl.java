@@ -48,7 +48,7 @@ class BoundedExecutorServiceImpl extends ThreadPoolExecutor implements BoundedEx
 	 */
 	@Override
 	public <T> Future<T> submitButBlockIfFull(final Callable<T> task) throws InterruptedException {
-		return super.submit(task);
+		return this.submit(task);
 	}
 
 	/**
@@ -57,7 +57,7 @@ class BoundedExecutorServiceImpl extends ThreadPoolExecutor implements BoundedEx
 	 */
 	@Override
 	public void executeButBlockIfFull(final Runnable task) throws InterruptedException {
-		super.execute(task);
+		this.execute(task);
 	}
 
 	private void blockIfFull() throws InterruptedException {
