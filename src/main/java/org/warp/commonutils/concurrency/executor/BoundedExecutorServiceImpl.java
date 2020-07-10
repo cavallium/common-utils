@@ -51,6 +51,24 @@ class BoundedExecutorServiceImpl extends ThreadPoolExecutor implements BoundedEx
 		return this.submit(task);
 	}
 
+	@Override
+	public Future<?> submit(Runnable task) {
+		preChecks();
+		return super.submit(task);
+	}
+
+	@Override
+	public <T> Future<T> submit(Callable<T> task) {
+		preChecks();
+		return super.submit(task);
+	}
+
+	@Override
+	public <T> Future<T> submit(Runnable task, T result) {
+		preChecks();
+		return super.submit(task, result);
+	}
+
 	/**
 	 * Submits task to execution pool, but blocks while number of running threads
 	 * has reached the bound limit
@@ -60,23 +78,22 @@ class BoundedExecutorServiceImpl extends ThreadPoolExecutor implements BoundedEx
 		this.execute(task);
 	}
 
-	private void blockIfFull() throws InterruptedException {
-		if (semaphore.availablePermits() == 0) {
-			synchronized (queueSizeStatusLock) {
-				if (queueSizeStatus != null) queueSizeStatus.accept(true, maxQueueSize + (semaphore.hasQueuedThreads() ? semaphore.getQueueLength() : 0));
-			}
-		}
-		semaphore.acquire();
+	@Override
+	public void execute(Runnable command) {
+		preChecks();
+		super.execute(command);
 	}
 
-	@Override
-	public void beforeExecute(Thread t, Runnable r) {
+	private void preChecks() {
 		try {
 			blockIfFull();
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
+	}
 
+	@Override
+	protected void beforeExecute(Thread t, Runnable r) {
 		var queueSize = getQueue().size();
 		synchronized (queueSizeStatusLock) {
 			if (queueSizeStatus != null) queueSizeStatus.accept(queueSize >= maxQueueSize, queueSize);
@@ -85,5 +102,14 @@ class BoundedExecutorServiceImpl extends ThreadPoolExecutor implements BoundedEx
 		semaphore.release();
 
 		super.beforeExecute(t, r);
+	}
+
+	private void blockIfFull() throws InterruptedException {
+		if (semaphore.availablePermits() == 0) {
+			synchronized (queueSizeStatusLock) {
+				if (queueSizeStatus != null) queueSizeStatus.accept(true, maxQueueSize + (semaphore.hasQueuedThreads() ? semaphore.getQueueLength() : 0));
+			}
+		}
+		semaphore.acquire();
 	}
 }
