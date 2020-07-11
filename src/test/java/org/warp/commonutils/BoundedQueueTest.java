@@ -18,7 +18,6 @@ public class BoundedQueueTest {
 		AtomicReference<AssertionFailedError> failedError = new AtomicReference<>();
 		var executor = BoundedExecutorService.create(maxQueueSize,
 				1,
-				1,
 				0L,
 				TimeUnit.MILLISECONDS,
 				new ShortNamedThreadFactory("test"),

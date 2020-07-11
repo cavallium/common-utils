@@ -15,46 +15,49 @@ public interface BoundedExecutorService extends ExecutorService {
 	@Deprecated
 	static BoundedExecutorService create(int maxQueueSize,
 			int corePoolSize,
-			int maxPoolSize,
 			long keepAliveTime,
 			TimeUnit unit,
 			@Nullable BiConsumer<Boolean, Integer> queueSizeStatus) {
-		return create(maxQueueSize, corePoolSize, maxPoolSize, keepAliveTime, unit, Executors.defaultThreadFactory(), queueSizeStatus);
+		return create(maxQueueSize, corePoolSize, keepAliveTime, unit, Executors.defaultThreadFactory(), queueSizeStatus);
 	}
 
 	static BoundedExecutorService create(int maxQueueSize,
 			int corePoolSize,
-			int maxPoolSize,
 			long keepAliveTime,
 			TimeUnit unit,
 			ThreadFactory threadFactory,
 			@Nullable BiConsumer<Boolean, Integer> queueSizeStatus) {
 		var threadPoolExecutor = new ThreadPoolExecutor(corePoolSize,
-				maxPoolSize,
+				corePoolSize,
 				keepAliveTime,
 				unit,
 				new LinkedBlockingQueue<>(),
 				threadFactory
 		);
-		return new BlockingOnFullQueueExecutorServiceDecorator(threadPoolExecutor, maxPoolSize, Duration.ofDays(1000000));
+		return create(maxQueueSize, corePoolSize, keepAliveTime, unit, threadFactory, Duration.ofDays(1000000), queueSizeStatus);
 	}
 
 	static BoundedExecutorService create(int maxQueueSize,
 			int corePoolSize,
-			int maxPoolSize,
 			long keepAliveTime,
 			TimeUnit unit,
 			ThreadFactory threadFactory,
 			Duration queueItemTtl,
 			@Nullable BiConsumer<Boolean, Integer> queueSizeStatus) {
+		var queue = new LinkedBlockingQueue<Runnable>();
 		var threadPoolExecutor = new ThreadPoolExecutor(corePoolSize,
-				maxPoolSize,
+				corePoolSize,
 				keepAliveTime,
 				unit,
-				new LinkedBlockingQueue<>(),
+				queue,
 				threadFactory
 		);
-		return new BlockingOnFullQueueExecutorServiceDecorator(threadPoolExecutor, maxPoolSize, queueItemTtl);
+		return new BlockingOnFullQueueExecutorServiceDecorator(threadPoolExecutor,
+				maxQueueSize,
+				queueItemTtl,
+				queue::size,
+				queueSizeStatus
+		);
 	}
 
 	@Deprecated

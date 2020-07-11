@@ -14,8 +14,11 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BlockingOnFullQueueExecutorServiceDecorator implements BoundedExecutorService {
 
@@ -78,16 +81,28 @@ public class BlockingOnFullQueueExecutorServiceDecorator implements BoundedExecu
 		}
 	}
 
+	private volatile boolean ignoreTaskLimit;
+
 	@Nonnull
 	private final Semaphore taskLimit;
 
 	@Nonnull
 	private final Duration timeout;
 
+	private final int maximumTaskNumber;
+
+	@Nonnull
+	private final Supplier<Integer> queueSizeSupplier;
+
+	private final @Nullable BiConsumer<Boolean, Integer> queueSizeStatus;
+
+	@Nonnull
+	private final Object queueSizeStatusLock;
+
 	@Nonnull
 	private final ExecutorService delegate;
 
-	public BlockingOnFullQueueExecutorServiceDecorator(@Nonnull final ExecutorService executor, final int maximumTaskNumber, @Nonnull final Duration maximumTimeout) {
+	public BlockingOnFullQueueExecutorServiceDecorator(@Nonnull final ExecutorService executor, final int maximumTaskNumber, @Nonnull final Duration maximumTimeout, @Nonnull Supplier<Integer> queueSizeSupplier, @Nullable BiConsumer<Boolean, Integer> queueSizeStatus) {
 		this.delegate = Objects.requireNonNull(executor, "'executor' must not be null");
 		if (maximumTaskNumber < 1) {
 			throw new IllegalArgumentException(String.format("At least one task must be permitted, not '%d'", maximumTaskNumber));
@@ -96,21 +111,40 @@ public class BlockingOnFullQueueExecutorServiceDecorator implements BoundedExecu
 		if (this.timeout.isNegative()) {
 			throw new IllegalArgumentException("'maximumTimeout' must not be negative");
 		}
+		this.maximumTaskNumber = maximumTaskNumber;
+		this.queueSizeSupplier = queueSizeSupplier;
+		this.queueSizeStatus = queueSizeStatus;
+		this.queueSizeStatusLock = new Object();
 		this.taskLimit = new Semaphore(maximumTaskNumber);
 	}
 
 	private void preExecute(Object command) {
 		Objects.requireNonNull(command, "'command' must not be null");
-		try {
-			// attempt to acquire permit for task execution
-			if (!this.taskLimit.tryAcquire(this.timeout.toMillis(), MILLISECONDS)) {
-				throw new RejectedExecutionException(String.format("Executor '%s' busy", this.delegate));
-			}
+
+		var queueSize = queueSizeSupplier.get();
+		synchronized (queueSizeStatusLock) {
+			if (queueSizeStatus != null) queueSizeStatus.accept(queueSize >= maximumTaskNumber, queueSize);
 		}
-		catch (final InterruptedException e) {
-			// restore interrupt status
-			Thread.currentThread().interrupt();
-			throw new IllegalStateException(e);
+
+		if (!ignoreTaskLimit) {
+			try {
+				if (this.taskLimit.availablePermits() == 0) {
+					synchronized (queueSizeStatusLock) {
+						if (queueSizeStatus != null)
+							queueSizeStatus.accept(true,
+									maximumTaskNumber + (taskLimit.hasQueuedThreads() ? taskLimit.getQueueLength() : 0)
+							);
+					}
+				}
+				// attempt to acquire permit for task execution
+				if (!this.taskLimit.tryAcquire(this.timeout.toMillis(), MILLISECONDS)) {
+					throw new RejectedExecutionException(String.format("Executor '%s' busy", this.delegate));
+				}
+			} catch (final InterruptedException e) {
+				// restore interrupt status
+				Thread.currentThread().interrupt();
+				throw new IllegalStateException(e);
+			}
 		}
 	}
 
@@ -124,12 +158,20 @@ public class BlockingOnFullQueueExecutorServiceDecorator implements BoundedExecu
 
 	@Override
 	public void shutdown() {
+		this.ignoreTaskLimit = true;
+		while (this.taskLimit.hasQueuedThreads()) {
+			this.taskLimit.release(10);
+		}
 		this.delegate.shutdown();
 	}
 
 	@NotNull
 	@Override
 	public List<Runnable> shutdownNow() {
+		this.ignoreTaskLimit = true;
+		while (this.taskLimit.hasQueuedThreads()) {
+			this.taskLimit.release(10);
+		}
 		return this.delegate.shutdownNow();
 	}
 

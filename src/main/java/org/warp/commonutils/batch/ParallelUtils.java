@@ -17,7 +17,7 @@ public class ParallelUtils {
 			int parallelism,
 			int groupSize,
 			BiConsumer<K, V> consumer) {
-		BoundedExecutorService parallelExecutor = BoundedExecutorService.create(maxQueueSize, parallelism, parallelism * 2, 0, TimeUnit.MILLISECONDS, new ShortNamedThreadFactory("ForEachParallel"), (a, b) -> {});
+		BoundedExecutorService parallelExecutor = BoundedExecutorService.create(maxQueueSize, parallelism, 0, TimeUnit.MILLISECONDS, new ShortNamedThreadFactory("ForEachParallel"), (a, b) -> {});
 		final int CHUNK_SIZE = groupSize;
 		IntWrapper count = new IntWrapper(CHUNK_SIZE);
 		VariableWrapper<Object[]> keys = new VariableWrapper<>(new Object[CHUNK_SIZE]);
@@ -57,7 +57,7 @@ public class ParallelUtils {
 			int parallelism,
 			int groupSize,
 			TriConsumer<K1, K2, V> consumer) {
-		BoundedExecutorService parallelExecutor = BoundedExecutorService.create(maxQueueSize, parallelism, parallelism * 2, 0, TimeUnit.MILLISECONDS, new ShortNamedThreadFactory("ForEachParallel"), (a, b) -> {});
+		BoundedExecutorService parallelExecutor = BoundedExecutorService.create(maxQueueSize, parallelism, 0, TimeUnit.MILLISECONDS, new ShortNamedThreadFactory("ForEachParallel"), (a, b) -> {});
 		final int CHUNK_SIZE = groupSize;
 		IntWrapper count = new IntWrapper(CHUNK_SIZE);
 		VariableWrapper<Object[]> keys1 = new VariableWrapper<>(new Object[CHUNK_SIZE]);
