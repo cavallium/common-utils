@@ -39,7 +39,7 @@ public class BoundedQueueTest {
 
 		for (int i = 0; i < 10000; i++) {
 			queueSize.incrementAndGet();
-			executor.executeButBlockIfFull(queueSize::decrementAndGet);
+			executor.execute(queueSize::decrementAndGet);
 		}
 
 		executor.shutdown();

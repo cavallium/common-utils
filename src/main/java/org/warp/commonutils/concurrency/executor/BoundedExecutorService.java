@@ -13,6 +13,31 @@ import org.jetbrains.annotations.Nullable;
 public interface BoundedExecutorService extends ExecutorService {
 
 	@Deprecated
+	static ExecutorService createUnbounded(
+			int corePoolSize,
+			long keepAliveTime,
+			TimeUnit unit,
+			@Nullable BiConsumer<Boolean, Integer> queueSizeStatus) {
+		return create(0, corePoolSize, keepAliveTime, unit, Executors.defaultThreadFactory(), queueSizeStatus);
+	}
+
+	static ExecutorService createUnbounded(
+			int corePoolSize,
+			long keepAliveTime,
+			TimeUnit unit,
+			ThreadFactory threadFactory,
+			@Nullable BiConsumer<Boolean, Integer> queueSizeStatus) {
+		var threadPoolExecutor = new ThreadPoolExecutor(corePoolSize,
+				corePoolSize,
+				keepAliveTime,
+				unit,
+				new LinkedBlockingQueue<>(),
+				threadFactory
+		);
+		return create(0, corePoolSize, keepAliveTime, unit, threadFactory, Duration.ofDays(1000000), queueSizeStatus);
+	}
+
+	@Deprecated
 	static BoundedExecutorService create(int maxQueueSize,
 			int corePoolSize,
 			long keepAliveTime,
@@ -58,10 +83,5 @@ public interface BoundedExecutorService extends ExecutorService {
 				queue::size,
 				queueSizeStatus
 		);
-	}
-
-	@Deprecated
-	default void executeButBlockIfFull(Runnable task) throws InterruptedException {
-		this.execute(task);
 	}
 }

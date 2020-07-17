@@ -122,8 +122,10 @@ public class BlockingOnFullQueueExecutorServiceDecorator implements BoundedExecu
 
 	public BlockingOnFullQueueExecutorServiceDecorator(@Nonnull final ExecutorService executor, final int maximumTaskNumber, @Nonnull final Duration maximumTimeout, @Nonnull Supplier<Integer> queueSizeSupplier, @Nullable BiConsumer<Boolean, Integer> queueSizeStatus) {
 		this.delegate = Objects.requireNonNull(executor, "'executor' must not be null");
-		if (maximumTaskNumber < 1) {
-			throw new IllegalArgumentException(String.format("At least one task must be permitted, not '%d'", maximumTaskNumber));
+		if (maximumTaskNumber < 0) {
+			throw new IllegalArgumentException(String.format("At least zero tasks must be permitted, not '%d'", maximumTaskNumber));
+		} else if (maximumTaskNumber == 0) {
+			ignoreTaskLimit = true;
 		}
 		this.timeout = Objects.requireNonNull(maximumTimeout, "'maximumTimeout' must not be null");
 		if (this.timeout.isNegative()) {
@@ -155,7 +157,7 @@ public class BlockingOnFullQueueExecutorServiceDecorator implements BoundedExecu
 			} catch (final InterruptedException e) {
 				// restore interrupt status
 				Thread.currentThread().interrupt();
-				throw new IllegalStateException(e);
+				throw new RejectedExecutionException(e);
 			}
 		}
 	}
@@ -167,7 +169,7 @@ public class BlockingOnFullQueueExecutorServiceDecorator implements BoundedExecu
 		this.delegate.execute(new PermitReleasingRunnableDecorator(command, () -> {
 			var queueSize = queueSizeSupplier.get();
 			synchronized (queueSizeStatusLock) {
-				if (queueSizeStatus != null) queueSizeStatus.accept(queueSize >= maximumTaskNumber, queueSize);
+				if (queueSizeStatus != null) queueSizeStatus.accept(!ignoreTaskLimit && queueSize >= maximumTaskNumber, queueSize);
 			}
 		}, this.taskLimit));
 	}

@@ -1,6 +1,7 @@
 package org.warp.commonutils.batch;
 
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -33,13 +34,13 @@ public class ParallelUtils {
 				keys.var = new Object[CHUNK_SIZE];
 				values.var = new Object[CHUNK_SIZE];
 				try {
-					parallelExecutor.executeButBlockIfFull(() -> {
+					parallelExecutor.execute(() -> {
 						for (int i = 0; i < CHUNK_SIZE; i++) {
 							//noinspection unchecked
 							consumer.accept((K) keysCopy[i], (V) valuesCopy[i]);
 						}
 					});
-				} catch (InterruptedException e) {
+				} catch (RejectedExecutionException e) {
 					throw new CompletionException(e);
 				}
 			}
@@ -77,13 +78,13 @@ public class ParallelUtils {
 				keys2.var = new Object[CHUNK_SIZE];
 				values.var = new Object[CHUNK_SIZE];
 				try {
-					parallelExecutor.executeButBlockIfFull(() -> {
+					parallelExecutor.execute(() -> {
 						for (int i = 0; i < CHUNK_SIZE; i++) {
 							//noinspection unchecked
 							consumer.accept((K1) keys1Copy[i], (K2) keys2Copy[i], (V) valuesCopy[i]);
 						}
 					});
-				} catch (InterruptedException e) {
+				} catch (RejectedExecutionException e) {
 					throw new CompletionException(e);
 				}
 			}
