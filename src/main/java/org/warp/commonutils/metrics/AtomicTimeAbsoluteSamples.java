@@ -88,23 +88,16 @@ public class AtomicTimeAbsoluteSamples implements AtomicTimeAbsoluteSamplesSnaps
 	public synchronized double getAveragePerSecond(long timeRange) {
 		updateSamples();
 
-		long currentTime = System.nanoTime() / 1000000L;
 		double preciseTimeRange = timeRange;
 		// Fix if the time range is bigger than the collected data since start
-		if (currentTime - preciseTimeRange < startTime) {
-			preciseTimeRange = currentTime - startTime;
+		if (currentSampleStartTime - preciseTimeRange < startTime) {
+			preciseTimeRange = currentSampleStartTime - startTime;
 		}
 
 		double samplesCount = Math.min(Math.max(preciseTimeRange / sampleTime, 1d), samples.length);
 		double value = 0;
-		for (int i = samplesCount == 1 ? 0 : 1; i < samplesCount; i++) {
-			double sampleValue;
-			if (i == 0) {
-				sampleValue = samples[i] * sampleTime / (double) (currentTime - currentSampleStartTime);
-			} else {
-				sampleValue = samples[i];
-			}
-			value += sampleValue;
+		for (int i = 1; i <= samplesCount; i++) {
+			value += samples[i];
 		}
 		return value / samplesCount;
 	}
