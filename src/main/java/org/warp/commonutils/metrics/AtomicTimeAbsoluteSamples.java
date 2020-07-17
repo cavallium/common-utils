@@ -97,7 +97,7 @@ public class AtomicTimeAbsoluteSamples implements AtomicTimeAbsoluteSamplesSnaps
 
 		double samplesCount = Math.min(Math.max(preciseTimeRange / sampleTime, 1d), samples.length);
 		double value = 0;
-		for (int i = 0; i < samplesCount; i++) {
+		for (int i = samplesCount == 1 ? 0 : 1; i < samplesCount; i++) {
 			double sampleValue;
 			if (i == 0) {
 				sampleValue = samples[i] * sampleTime / (double) (currentTime - currentSampleStartTime);
