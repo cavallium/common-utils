@@ -81,19 +81,26 @@ public class AtomicTimeIncrementalSamples implements AtomicTimeIncrementalSample
 	public synchronized double getAveragePerSecond(long timeRange) {
 		updateSamples();
 
+		long currentTime = System.nanoTime() / 1000000L;
+		double preciseTimeRange = timeRange;
 		// Fix if the time range is bigger than the collected data since start
-		long currentTime = currentSampleStartTime;
-		if (currentTime - timeRange < startTime) {
-			timeRange = currentTime - startTime;
+		if (currentTime - preciseTimeRange < startTime) {
+			preciseTimeRange = currentTime - startTime;
 		}
 
-		long samplesCount = Math.min(Math.max(timeRange / sampleTime, 1L), samples.length);
-		long roundedTimeRange = samplesCount * sampleTime;
-		long value = 0;
+		double samplesCount = Math.min(Math.max(preciseTimeRange / sampleTime, 1d), samples.length);
+		double roundedTimeRange = samplesCount * sampleTime;
+		double value = 0;
 		for (int i = 0; i < samplesCount; i++) {
-			value += samples[i];
+			double sampleValue;
+			if (i == 0) {
+				sampleValue = samples[i] * sampleTime / (double) (currentTime - currentSampleStartTime);
+			} else {
+				 sampleValue = samples[i];
+			}
+			value += sampleValue;
 		}
-		return ((double) value) / ((double) roundedTimeRange / 1000D);
+		return (value / roundedTimeRange) * 1000d;
 	}
 
 
