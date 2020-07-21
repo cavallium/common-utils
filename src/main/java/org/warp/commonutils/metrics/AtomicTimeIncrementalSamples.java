@@ -87,7 +87,10 @@ public class AtomicTimeIncrementalSamples implements AtomicTimeIncrementalSample
 			preciseTimeRange = currentSampleStartTime - startTime;
 		}
 
-		double samplesCount = Math.min(Math.max(preciseTimeRange / sampleTime, 1d), samples.length);
+		double samplesCount = Math.min(Math.max(preciseTimeRange / sampleTime, 1d), samples.length - 1);
+		if (samplesCount < 0) {
+			return 0;
+		}
 		double roundedTimeRange = samplesCount * sampleTime;
 		double value = 0;
 		for (int i = 1; i <= samplesCount; i++) {
