@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -145,6 +146,12 @@ public class CompletableFutureUtils {
 		futures.stream().map(CompletableFuture::join).forEachOrdered(consumer);
 	}
 
+	public static <T> void forEachOrderedSet(CompletableFuture<LinkedHashSet<CompletableFuture<T>>> futureList,
+			Consumer<T> consumer) {
+		var futures = futureList.join();
+		futures.stream().map(CompletableFuture::join).forEachOrdered(consumer);
+	}
+
 	public static <T> void forEach(CompletableFuture<List<CompletableFuture<T>>> futureList, Consumer<T> consumer) {
 		futureList.join().parallelStream().map(CompletableFuture::join).forEach(consumer);
 	}
@@ -173,6 +180,34 @@ public class CompletableFutureUtils {
 		var result = CompletableFuture.<Void>completedFuture(null);
 		for (CompletableFuture<?> completableFuture : collection) {
 			result = result.thenComposeAsync(x -> completableFuture.thenRun(() -> {}), executorService);
+		}
+		return result;
+	}
+
+	/**
+	 * Accept values synchronously from an async sequence
+	 */
+	public static <T> CompletableFuture<?> acceptSequenceAsync(Collection<CompletableFuture<T>> collection,
+			Function<T, CompletionStage<?>> runner,
+			ExecutorService executorService) {
+		CompletableFuture<?> result = CompletableFuture.completedFuture(null);
+		for (CompletableFuture<T> completableFuture : collection) {
+			result = result.thenComposeAsync(x -> completableFuture.thenComposeAsync(runner::apply, executorService),
+					executorService
+			);
+		}
+		return result;
+	}
+
+	/**
+	 * Accept values synchronously from an async sequence
+	 */
+	public static <T> CompletableFuture<?> acceptSequenceAsync(Collection<CompletableFuture<T>> collection,
+			Consumer<T> runner,
+			ExecutorService executorService) {
+		CompletableFuture<?> result = CompletableFuture.completedFuture(null);
+		for (CompletableFuture<T> completableFuture : collection) {
+			result = result.thenComposeAsync(x -> completableFuture.thenAcceptAsync(runner, executorService), executorService);
 		}
 		return result;
 	}
