@@ -16,6 +16,31 @@
     <maven.compiler.target>11</maven.compiler.target>
   </properties>
 
+  <profiles>
+    <profile>
+      <id>publish-to-tdlight</id>
+      <properties/>
+      <distributionManagement>
+        <repository>
+          <id>github</id>
+          <name>GitHub TDLight Team Apache Maven Packages</name>
+          <url>https://maven.pkg.github.com/tdlight-team/tdlight-java</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+    <profile>
+      <id>publish-to-github</id>
+      <properties/>
+      <distributionManagement>
+        <repository>
+          <id>github</id>
+          <name>GitHub Cavallium Apache Maven Packages</name>
+          <url>https://maven.pkg.github.com/Cavallium/common-utils</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+  </profiles>
+
   <dependencies>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
